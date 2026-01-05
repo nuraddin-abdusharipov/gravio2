@@ -42,7 +42,7 @@ bot.start(async (ctx) => {
                 `Hello, ${ctx.from.first_name}. Welcome to Gravio!`,
                 Markup.inlineKeyboard([
                     [Markup.button.webApp('Open 📍', 'https://graviotoken.netlify.app/')],
-                    [Markup.button.url('Our channel 🧧', 'https://example.com')]
+                    [Markup.button.url('Our channel 🧧', 'https://t.me/GravioToken')]
                 ])
             );
         }
@@ -53,7 +53,7 @@ bot.start(async (ctx) => {
                 caption: `Hello, ${ctx.from.first_name}. Welcome to Gravio!`,
                 ...Markup.inlineKeyboard([
                     [Markup.button.webApp('Open 📍', 'https://graviotoken.netlify.app/')],
-                    [Markup.button.url('Our channel 🧧', 'https://example.com')]
+                    [Markup.button.url('Our channel 🧧', 'https://t.me/GravioToken')]
                 ])
             }
         );
@@ -64,7 +64,7 @@ bot.start(async (ctx) => {
             `Hello, ${ctx.from.first_name}. Welcome to Gravio!\n\n` +
             Markup.inlineKeyboard([
                 [Markup.button.webApp('Open 📍', 'https://graviotoken.netlify.app/')],
-                [Markup.button.url('Our channel 🧧', 'https://example.com')]
+                [Markup.button.url('Our channel 🧧', 'https://t.me/GravioToken')]
             ])
         );
     }
