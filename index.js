@@ -107,7 +107,7 @@ app.post("/check-subscription", async (req, res) => {
       .get();
 
     if (!doneDoc.empty) {
-      return res.status(400).json({ success: false, message: "You have already took fot it!" });
+      return res.status(400).json({ success: false, message: "You have already took for it!" });
     }
 
     const userRef = db.collection("users").doc(String(userId));
