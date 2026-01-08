@@ -90,7 +90,7 @@ app.post("/check-subscription", async (req, res) => {
   const { userId, channel, taskId, reward } = req.body;
 
   if (!userId || !channel || !taskId) {
-    return res.status(400).json({ success: false, message: "Ma'lumotlar to'liq emas!" });
+    return res.status(400).json({ success: false, message: "ERROR!" });
   }
 
   try {
@@ -98,7 +98,7 @@ app.post("/check-subscription", async (req, res) => {
     const isSubscribed = ['member', 'administrator', 'creator'].includes(member.status);
 
     if (!isSubscribed) {
-      return res.status(400).json({ success: false, message: "Siz kanalga a'zo emassiz!" });
+      return res.status(400).json({ success: false, message: "You have not subscribed!" });
     }
 
     const doneDoc = await db.collection("done")
@@ -107,7 +107,7 @@ app.post("/check-subscription", async (req, res) => {
       .get();
 
     if (!doneDoc.empty) {
-      return res.status(400).json({ success: false, message: "Bu vazifa uchun allaqachon mukofot olgansiz!" });
+      return res.status(400).json({ success: false, message: "You have already took fot it!" });
     }
 
     const userRef = db.collection("users").doc(String(userId));
@@ -126,12 +126,12 @@ app.post("/check-subscription", async (req, res) => {
 
     return res.json({ 
       success: true, 
-      message: `Tabriklaymiz! ${reward} ball qo'shildi.` 
+      message: `Success ${reward} has given.` 
     });
 
   } catch (err) {
     console.error("Xatolik:", err);
-    return res.status(500).json({ success: false, message: "Serverda xatolik yuz berdi." });
+    return res.status(500).json({ success: false, message: "ERROR!" });
   }
 });
 
