@@ -8,7 +8,7 @@ const cors = require("cors");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Tokenni shu yerga qo'ying
+// Token ochiq holatda
 const BOT_TOKEN = "8459062919:AAGwNnWKi7wGP4p7neCxVZgBJiCj_mijmkg";
 
 if (!BOT_TOKEN) {
@@ -37,9 +37,6 @@ app.use(express.json());
 
 // Logo
 const logo = path.join(__dirname, "gravio.jpg");
-if (!fs.existsSync(logo)) {
-  console.warn("⚠️ gravio.jpg topilmadi!");
-}
 
 // Routes
 app.get("/", (req, res) => {
@@ -169,7 +166,7 @@ app.post("/check-subscription", async (req, res) => {
   }
 });
 
-// Serverni avval ishga tushiramiz, keyin botni
+// Serverni ishga tushirish
 app.listen(PORT, async () => {
   console.log(`🚀 Server running on port ${PORT}`);
 
