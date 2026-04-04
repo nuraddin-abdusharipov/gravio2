@@ -160,7 +160,9 @@ app.post("/check-subscription", async (req, res) => {
   }
 });
 
-async function startServer() {
+app.listen(PORT, async () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+
   try {
     const me = await bot.telegram.getMe();
     console.log(`✅ Telegram connected: @${me.username}`);
@@ -170,17 +172,10 @@ async function startServer() {
 
     await bot.launch();
     console.log("🤖 Bot started successfully");
-
-    app.listen(PORT, () => {
-      console.log(`🚀 Server running on port ${PORT}`);
-    });
   } catch (err) {
     console.error("❌ Bot launch error:", err);
-    process.exit(1);
   }
-}
-
-startServer();
+});
 
 process.once("SIGINT", () => {
   bot.stop("SIGINT");
