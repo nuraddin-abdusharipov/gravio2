@@ -8,14 +8,16 @@ const cors = require("cors");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const BOT_TOKEN = '8459062919:AAGwNnWKi7wGP4p7neCxVZgBJiCj_mijmkg';
+// Tokenni shu yerga qo'ying
+const BOT_TOKEN = "8459062919:AAGwNnWKi7wGP4p7neCxVZgBJiCj_mijmkg";
 
 if (!BOT_TOKEN) {
-  throw new Error("BOT_TOKEN topilmadi. Render environment variables yoki .env ni tekshiring.");
+  throw new Error("BOT_TOKEN topilmadi.");
 }
 
 const bot = new Telegraf(BOT_TOKEN);
 
+// Firebase service account
 const serviceAccountPath = path.join(__dirname, "serviceAccountKey.json");
 if (!fs.existsSync(serviceAccountPath)) {
   throw new Error("serviceAccountKey.json topilmadi.");
@@ -29,14 +31,17 @@ admin.initializeApp({
 
 const db = admin.firestore();
 
+// Middlewares
 app.use(cors());
 app.use(express.json());
 
+// Logo
 const logo = path.join(__dirname, "gravio.jpg");
 if (!fs.existsSync(logo)) {
   console.warn("⚠️ gravio.jpg topilmadi!");
 }
 
+// Routes
 app.get("/", (req, res) => {
   res.json({
     status: "online",
@@ -52,6 +57,7 @@ app.get("/health", (req, res) => {
   });
 });
 
+// Telegram /start
 bot.start(async (ctx) => {
   try {
     const fromId = ctx.from.id;
@@ -90,6 +96,7 @@ bot.start(async (ctx) => {
   }
 });
 
+// Subscription check
 app.post("/check-subscription", async (req, res) => {
   const { userId, channel, taskId, reward } = req.body;
 
@@ -102,7 +109,9 @@ app.post("/check-subscription", async (req, res) => {
 
   try {
     const member = await bot.telegram.getChatMember(channel, userId);
-    const isSubscribed = ["member", "administrator", "creator"].includes(member.status);
+    const isSubscribed = ["member", "administrator", "creator"].includes(
+      member.status
+    );
 
     if (!isSubscribed) {
       return res.status(400).json({
@@ -160,6 +169,7 @@ app.post("/check-subscription", async (req, res) => {
   }
 });
 
+// Serverni avval ishga tushiramiz, keyin botni
 app.listen(PORT, async () => {
   console.log(`🚀 Server running on port ${PORT}`);
 
@@ -177,6 +187,7 @@ app.listen(PORT, async () => {
   }
 });
 
+// Graceful shutdown
 process.once("SIGINT", () => {
   bot.stop("SIGINT");
   process.exit(0);
