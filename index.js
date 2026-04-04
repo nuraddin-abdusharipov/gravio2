@@ -8,7 +8,7 @@ const cors = require("cors");
 const app = express();
 const PORT = 3000;
 
-const BOT_TOKEN = '8459062919:AAGwNnWKi7wGP4p7neCxVZgBJiCj_mijmkg;
+const BOT_TOKEN = '8459062919:AAGwNnWKi7wGP4p7neCxVZgBJiCj_mijmkg';
 
 if (!BOT_TOKEN) {
   throw new Error("BOT_TOKEN topilmadi. Render environment variables yoki .env ni tekshiring.");
