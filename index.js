@@ -6,27 +6,51 @@ const admin = require("firebase-admin");
 const cors = require("cors");
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = 3000;
 
-const BOT_TOKEN = "8459062919:AAGwNnWKi7wGP4p7neCxVZgBJiCj_mijmkg";
+const BOT_TOKEN = '8459062919:AAGwNnWKi7wGP4p7neCxVZgBJiCj_mijmkg;
+
+if (!BOT_TOKEN) {
+  throw new Error("BOT_TOKEN topilmadi. Render environment variables yoki .env ni tekshiring.");
+}
+
 const bot = new Telegraf(BOT_TOKEN);
 
+const serviceAccountPath = path.join(__dirname, "serviceAccountKey.json");
+if (!fs.existsSync(serviceAccountPath)) {
+  throw new Error("serviceAccountKey.json topilmadi.");
+}
+
 const serviceAccount = require("./serviceAccountKey.json");
+
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
+
 const db = admin.firestore();
 
 app.use(cors());
 app.use(express.json());
 
 const logo = path.join(__dirname, "gravio.jpg");
-if (!fs.existsSync(logo)) console.warn("⚠️ gravio.jpg topilmadi!");
+if (!fs.existsSync(logo)) {
+  console.warn("⚠️ gravio.jpg topilmadi!");
+}
 
-app.get("/", (req, res) => res.json({ status: "online", time: new Date() }));
-app.get("/health", (req, res) =>
-  res.json({ status: "healthy", uptime: process.uptime() })
-);
+app.get("/", (req, res) => {
+  res.json({
+    status: "online",
+    time: new Date(),
+    message: "Gravio backend is running",
+  });
+});
+
+app.get("/health", (req, res) => {
+  res.json({
+    status: "healthy",
+    uptime: process.uptime(),
+  });
+});
 
 bot.start(async (ctx) => {
   try {
@@ -42,37 +66,38 @@ bot.start(async (ctx) => {
       });
     }
 
-    // Xush kelibsiz
+    const keyboard = Markup.inlineKeyboard([
+      [Markup.button.webApp("Open 📍", "https://graviotoken.netlify.app/")],
+      [Markup.button.url("Our channel 🧧", "https://t.me/GravioToken")],
+    ]);
+
     if (fs.existsSync(logo)) {
       await ctx.replyWithPhoto(
         { source: fs.readFileSync(logo) },
         {
           caption: `Hello, ${ctx.from.first_name}. Welcome to Gravio!`,
-          ...Markup.inlineKeyboard([
-            [Markup.button.webApp("Open 📍", "https://graviotoken.netlify.app/")],
-            [Markup.button.url("Our channel 🧧", "https://t.me/GravioToken")],
-          ]),
+          ...keyboard,
         }
       );
     } else {
       await ctx.reply(
         `Hello, ${ctx.from.first_name}. Welcome to Gravio!`,
-        Markup.inlineKeyboard([
-          [Markup.button.webApp("Open 📍", "https://graviotoken.netlify.app/")],
-          [Markup.button.url("Our channel 🧧", "https://t.me/GravioToken")],
-        ])
+        keyboard
       );
     }
   } catch (err) {
-    console.error(err);
+    console.error("❌ /start error:", err);
   }
 });
 
 app.post("/check-subscription", async (req, res) => {
   const { userId, channel, taskId, reward } = req.body;
 
-  if (!userId || !channel || !taskId) {
-    return res.status(400).json({ success: false, message: "Missing parameters" });
+  if (!userId || !channel || !taskId || reward == null) {
+    return res.status(400).json({
+      success: false,
+      message: "Missing parameters",
+    });
   }
 
   try {
@@ -80,7 +105,10 @@ app.post("/check-subscription", async (req, res) => {
     const isSubscribed = ["member", "administrator", "creator"].includes(member.status);
 
     if (!isSubscribed) {
-      return res.status(400).json({ success: false, message: "You have not subscribed!" });
+      return res.status(400).json({
+        success: false,
+        message: "You have not subscribed!",
+      });
     }
 
     const doneSnap = await db
@@ -90,33 +118,76 @@ app.post("/check-subscription", async (req, res) => {
       .get();
 
     if (!doneSnap.empty) {
-      return res.status(400).json({ success: false, message: "Task already completed!" });
+      return res.status(400).json({
+        success: false,
+        message: "Task already completed!",
+      });
     }
 
     const userRef = db.collection("users").doc(String(userId));
     const doneRef = db.collection("done").doc();
 
     await db.runTransaction(async (t) => {
-      t.set(userRef, { balance: admin.firestore.FieldValue.increment(reward) }, { merge: true });
+      t.set(
+        userRef,
+        {
+          balance: admin.firestore.FieldValue.increment(Number(reward)),
+        },
+        { merge: true }
+      );
+
       t.set(doneRef, {
         by: userId,
         taskId,
         channel,
+        reward: Number(reward),
         completedAt: admin.firestore.Timestamp.now(),
       });
     });
 
-    return res.json({ success: true, message: `Success! ${reward} added.` });
+    return res.json({
+      success: true,
+      message: `Success! ${reward} added.`,
+    });
   } catch (err) {
-    console.error(err);
-    return res.status(500).json({ success: false, message: "Server error" });
+    console.error("❌ check-subscription error:", err);
+
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: err.message,
+    });
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  bot.launch().then(() => console.log("🤖 Bot started")).catch(console.error);
+async function startServer() {
+  try {
+    const me = await bot.telegram.getMe();
+    console.log(`✅ Telegram connected: @${me.username}`);
+
+    await bot.telegram.deleteWebhook();
+    console.log("✅ Old webhook deleted");
+
+    await bot.launch();
+    console.log("🤖 Bot started successfully");
+
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+    });
+  } catch (err) {
+    console.error("❌ Bot launch error:", err);
+    process.exit(1);
+  }
+}
+
+startServer();
+
+process.once("SIGINT", () => {
+  bot.stop("SIGINT");
+  process.exit(0);
 });
 
-process.once("SIGINT", () => bot.stop("SIGINT"));
-process.once("SIGTERM", () => bot.stop("SIGTERM"));
+process.once("SIGTERM", () => {
+  bot.stop("SIGTERM");
+  process.exit(0);
+});
